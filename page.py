@@ -195,7 +195,7 @@ def paper_entry_page():
             <h1>步骤说明</h1>
                 <p>Step1: 填写API Key</p>
                 <p>Step2: 点击"测试"按钮，测试API调用是否正常</p>
-                <p>Step3: 点击"提交"按钮，调用API进行论文翻译、汇总</p>
+                <p>Step3: 点击"提交"按钮(为防止程序错误，前面两步运行正常后显示)，调用API进行论文翻译、汇总</p>
         </body>
         </html>
         """
