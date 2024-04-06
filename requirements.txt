@@ -1,0 +1,5 @@
+openai==1.9.0
+streamlit==1.29.0
+streamlit_antd_components==0.3.2
+streamlit_nested_layout==0.1.2
+streamlit_on_Hover_tabs==1.0.1
