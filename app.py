@@ -58,7 +58,11 @@ def main():
                 introduction=st.session_state["introduction_processed"],
                 abstract=st.session_state["abstract_processed"],
                 keywords=st.session_state["keywords-area"],
-                body=st.session_state["sections_processed"]
+                body=st.session_state["sections_processed"],
+                api_comments_flag=True,
+                summary=st.session_state["summary"],
+                section_summaries=st.session_state["section_summaries"],
+                overall_assessment=st.session_state["overall_assessment"],
             )
 
         with col2:
@@ -70,7 +74,11 @@ def main():
                 introduction=st.session_state["zh_introduction_processed"],
                 abstract=st.session_state["zh_abstract_processed"],
                 keywords=st.session_state["zh_keywords-area"],
-                body=st.session_state["zh_sections_processed"]
+                body=st.session_state["zh_sections_processed"],
+                api_comments_flag=True,
+                summary=st.session_state["summary"],
+                section_summaries=st.session_state["section_summaries"],
+                overall_assessment=st.session_state["overall_assessment"],
             )
 
 

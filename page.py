@@ -245,6 +245,10 @@ def paper_entry_page():
                 file_name=f"{st.session_state['title-area']}.json",
                 mime="application/json"
             )
+        if not st.session_state["summary_result"]:
+            st.markdown("summary_result不存在")
+        else:
+            st.json(st.session_state["summary_result"])
 
 
 def upload():

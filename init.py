@@ -32,7 +32,15 @@ def initialize_session_state_variables():
         "sections": [],  # Assuming sections is a list; adjust if it's supposed to be a different type
         # api key
         "api_key-area": "",
-        "api_flag": False
+        "api_flag": False,
+        # ChatGPT API对整篇论文分析结果汇总
+        "summary_result": {},
+        # ChatGPT API对整篇论文概述
+        "summary": "",
+        # ChatGPT API生成的论文分章节总结
+        "section_summaries": [],
+        # ChatGPT API对论文整体评估
+        "overall_assessment": []
     }
 
     for key, default_value in keys_with_default_values.items():

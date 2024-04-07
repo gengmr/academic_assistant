@@ -2,7 +2,7 @@ import json
 import streamlit as st
 import copy
 from openai import OpenAI
-from utils import escape_backslashes_except_newlines
+from utils import escape_backslashes_except_newlines, add_section_numbers, get_section_summary
 
 
 def api_test():
@@ -24,8 +24,8 @@ def api_test():
         )
         _ = response.choices[0].message.content
         st.session_state['api_flag'] = True
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
 
 def paragraph_process_api(api_key, text):
@@ -44,12 +44,28 @@ def paragraph_process_api(api_key, text):
                 api_key=api_key,
                 base_url="https://api.aiguoguo199.com/v1"
             )
+            system_prompt = """
+You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture.Process the given research paper excerpts as follow steps:
+
+1. Reorganize the paragraph segmentation using "\\n" to ensure clarity, standardization, and ease of understanding.
+2. Convert all mathematical expressions within the text to LaTeX format, by enclosing them within two dollar signs ($...$).
+3. Accurately identify and eliminate references to cited works within the text (e.g., removing citation markers, like "[9]" in "ConvS2S [9]"), ensuring the main content remains unaffected.
+4. After processing the English text, provide the corresponding Chinese text.
+
+You should only respond in the JSON format described below.
+Response Format:
+{
+  "en_context": "formatted text result, which may include multiple paragraphs",
+  "zh_context": "corresponding Chinese text result"
+}
+
+Ensure the response can be parsed by Python json.loads
+            """
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 temperature=0,
                 messages=[
-                    {'role': 'system',
-                    'content': 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture.Process the given research paper excerpts as follow steps:\n\n1. Reorganize the paragraph segmentation using "\\n" to ensure clarity, standardization, and ease of understanding.\n2. Convert all mathematical expressions within the text to LaTeX format, by enclosing them within two dollar signs ($...$).\n3. Accurately identify and eliminate references to cited works within the text (e.g., removing citation markers, like "[9]" in "ConvS2S [9]"), ensuring the main content remains unaffected.\n4. After processing the English text, provide the corresponding Chinese text.\n\nYou should only respond in the JSON format described below.\nResponse Format:\n{\n  "en_context": "formatted text result, which may include multiple paragraphs",\n  "zh_context": "corresponding Chinese text result"\n}\n\nEnsure the response can be parsed by Python json.loads'},
+                    {'role': 'system', 'content': system_prompt},
                     {"role": "user", "content": text}
                 ]
             )
@@ -72,6 +88,86 @@ def paragraph_process_api(api_key, text):
     return en_context, zh_context
 
 
+def summarize_api(api_key, text):
+    """
+    ChatGPT API分析整篇文章
+    """
+    print(text)
+    attempts = 0
+    max_attempts = 1  # 最大尝试次数
+    while attempts < max_attempts:
+        try:
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.aiguoguo199.com/v1"
+            )
+            system_prompt = """
+You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Process the given research paper with the following steps in Chinese:
+
+1. Systematically summarize the core content of the paper using professional, standard, and logically clear language (covering research content, innovations, comparisons with other methods, and conclusions, etc.), and provide the referenced chapter numbers.
+2. According to the order of the paper, sequentially summarize the main content of sections (including abstract, introduction, and body chapters) or subsections, and evaluate them from the perspective of a professional paper reviewer.
+3. From the perspective of a professional paper reviewer, assess the research paper's value, research methodology, innovations, and conclusions.
+
+You should only respond in the JSON format described below.
+Response Format:
+{
+  "summary": "A detailed and systematic summary of the research paper's core content, including research content, innovations, comparisons with other methods, and conclusions.",
+  "section_summaries": [
+    {
+      "section_number": "number of the section (e.g., 1, 1.1, 1.1.1)",
+      "content_summary": "Summary of the main content of this section.",
+      "sections": [
+        {
+          "section_number": "number of the subsection",
+          "content_summary": "Summary of the main content of this subsection.",
+          "sections": [
+            // This pattern can repeat as needed for deeper nested sections
+          ]
+        }
+        // Additional subsections can be added here
+      ]
+    }
+    // Additional sections can be added here
+  ],
+{
+  "overall_assessment": {
+    "research_topic": "Description of the research topic and its significance within the field.",
+    "research_outcomes": "Summary of the key findings and contributions of the paper to the existing body of knowledge.",
+    "dataset_description": "Explanation of the dataset(s) used in the paper. If no dataset is used, this section should be left blank.",
+    "methodology": "Assessment of the research methodology.",
+    "innovations": "Discussion of the innovative aspects of the paper.",
+    "overall_writing_logic": "Description of the paper's overall writing logic.",
+    "conclusions": "A professional, holistic, and systematic evaluation of the paper."
+  }
+}
+Please do not include any notes in the results. Ensure the response can be parsed by Python json.loads
+            """
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                temperature=0,
+                messages=[
+                    {'role': 'system', 'content': system_prompt},
+                    {"role": "user", "content": text}
+                ]
+            )
+            result = response.choices[0].message.content
+            print(result)
+            result = escape_backslashes_except_newlines(text=result)
+            try:
+                result = json.loads(result)
+                return result
+            except json.JSONDecodeError as e:  # 捕获json解析错误
+                print(f"Attempt {attempts + 1} failed with error: {e}")
+                attempts += 1
+                continue
+        except Exception as e:  # 捕获其他异常
+            print(f"Attempt {attempts + 1} failed with error: {e}")
+            attempts += 1
+
+    result = {"flag": "调用失败"}
+    return result
+
+
 def translate_api(api_key, text):
     """
     通过第三方平台调用chatgpt api翻译文本
@@ -86,12 +182,19 @@ def translate_api(api_key, text):
                 api_key=api_key,
                 base_url="https://api.aiguoguo199.com/v1"
             )
+            system_prompt = """
+You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Translate the given text into Chinese, ensuring that the translation is accurate, fluent, and faithful to the original.You should only respond in the JSON format described below.
+Response Format:
+{
+  "zh_text": "translation result in Chinese"
+}
+Ensure the response can be parsed by Python json.loads
+            """
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 temperature=0,
                 messages=[
-                    {'role': 'system',
-                     'content': 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Translate the given text into Chinese, ensuring that the translation is accurate, fluent, and faithful to the original.You should only respond in the JSON format described below.\nResponse Format:\n{\n  "zh_text": "translation result in Chinese"\n}\n\nEnsure the response can be parsed by Python json.loads'},
+                    {'role': 'system', 'content': system_prompt},
                     {'role': 'user', 'content': text}
                 ]
             )
@@ -117,20 +220,21 @@ def api_process():
     """
     通过chatgpt api处理论文信息，包括以下流程
     """
-    # 1. 翻译论文标题、论文机构、论文关键词
+    # 1. 处理论文各章节格式、翻译
+    # 1.1 翻译论文标题、论文机构、论文关键词
     st.session_state['zh_title-area'] = translate_api(api_key=st.session_state[f"api_key-area"],
                                                       text=st.session_state['title-area'])
     st.session_state['zh_institutes-area'] = translate_api(api_key=st.session_state[f"api_key-area"],
                                                       text=st.session_state['institutes-area'])
     st.session_state['zh_keywords-area'] = translate_api(api_key=st.session_state[f"api_key-area"],
                                                       text=st.session_state['keywords-area'])
-    # 2. 处理论文通用章节: abstract, introduction
+    # 1.2 处理论文通用章节: abstract, introduction
     st.session_state['abstract_processed'], st.session_state['zh_abstract_processed'] = paragraph_process_api(
         api_key=st.session_state[f"api_key-area"], text=st.session_state["abstract-area"])
     st.session_state['introduction_processed'], st.session_state['zh_introduction_processed'] = paragraph_process_api(
         api_key=st.session_state[f"api_key-area"], text=st.session_state["introduction-area"])
 
-    # 3. 处理论文正文'
+    # 1.3 处理论文正文'
     def sections_process(en_section, zh_section, level=0):
         # 翻译章节标题为中文
         zh_section['title'] = translate_api(api_key=st.session_state[f"api_key-area"], text=en_section['title'])
@@ -140,13 +244,46 @@ def api_process():
         for en_subsection, zh_subsection in zip(en_section['sections'], zh_section['sections']):
             sections_process(en_subsection, zh_subsection, level + 1)
 
-    # 创建sections的深拷贝，以分别处理英文和中文sections，直接赋值会指向同一数据，导致中英文正文结果相同
+    # 1.4 创建sections的深拷贝，以分别处理英文和中文sections，直接赋值会指向同一数据，导致中英文正文结果相同
     st.session_state['sections_processed'] = copy.deepcopy(st.session_state['sections'])
     st.session_state['zh_sections_processed'] = copy.deepcopy(st.session_state['sections'])
 
-    # 遍历并比较 en_sections 和 zh_sections 的每个章节
+    # 1.5 遍历并处理 en_sections 和 zh_sections 的每个章节
     for en_section, zh_section in zip(st.session_state['sections_processed'], st.session_state['zh_sections_processed']):
         sections_process(en_section, zh_section)
+
+    # 2. 汇总英文论文的标题、摘要、导言、正文各部分内容，利用chatgpt api总结论文
+    body = copy.deepcopy(st.session_state['sections_processed'])  # 论文正文，深度复制防止修改sections_processed
+    body = add_section_numbers(body=body)  # 增加章节号，去掉无效的id和flag字段
+    # 将摘要和引言部分合并
+    paper_body = [
+        {
+            "title": "abstract",
+            "texts": st.session_state["abstract-area"],
+            "sections": [],
+            "section_number": 1,
+        },
+        {
+            "title": "introduction",
+            "texts": st.session_state["introduction-area"],
+            "sections": [],
+            "section_number": 2,
+        }
+    ]
+    paper_body.extend(body)
+    # 论文数据
+    paper_data = {
+        "paper_title": st.session_state["title-area"],
+        "body": paper_body
+    }
+    paper_data = json.dumps(paper_data, indent=4)
+    st.session_state["summary_result"] = summarize_api(api_key=st.session_state[f"api_key-area"], text=paper_data)
+    if "section_summaries" in st.session_state["summary_result"]:
+        st.session_state["section_summaries"] = copy.deepcopy(get_section_summary(sections=st.session_state["summary_result"]["section_summaries"]))
+    if "summary" in st.session_state["summary_result"]:
+        st.session_state["summary"] = copy.deepcopy(st.session_state["summary_result"]["summary"])
+    if "overall_assessment" in st.session_state["summary_result"]:
+        st.session_state["overall_assessment"] = copy.deepcopy(st.session_state["summary_result"]["overall_assessment"])
 
 
 if __name__ == '__main__':
