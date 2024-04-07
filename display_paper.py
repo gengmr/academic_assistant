@@ -170,7 +170,7 @@ def display_paper(language, title, authors, institutes, introduction, abstract, 
         /* 额外样式，用于可滚动内容 */
         .scrollable-section {{
             background-color: #DFF0D8; /* 护眼色 */
-            height: 1200px;
+            height: 760px;
             overflow-y: scroll;
             padding: 10px;
             border-radius: 5px;
