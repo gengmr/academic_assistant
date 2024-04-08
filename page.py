@@ -62,8 +62,8 @@ def home_page():
         <p>用户可通过以下两种方式录入论文数据信息：</p>
         <p>(1) 点击软件侧边栏的“编辑”功能，输入论文基础信息（标题、作者、机构、年份、发表刊物）、论文通用章节（摘要、关键词、引言、相关工作）、论文正文。点击“分析”按钮使用ChatGPT API进行汇总分析。</p>
         <p>(2) 点击软件侧边栏的“导入”功能，通过json文件导入论文数据</p>
-        <h3>2. 保存</h3>
-        <p>点击软件侧边栏的“编辑”功能，在"Step 4-API分析"中点击"保存按钮"将数据保存为文件</p>
+        <h3>2. 下载</h3>
+        <p>点击软件侧边栏的“编辑”功能，在"Step 4-API分析"中点击"下载"按钮将数据保存为文件</p>
         <h3>3. 阅读论文</h3>
         <p>点击软件侧边栏的“查看”功能，用户可以选择并阅读感兴趣的论文，包括论文概要、论文内容和ChatGPT分析结果。</p>
         
@@ -74,7 +74,11 @@ def home_page():
                     <strong>v1.0 (2024.4.6):</strong>
                     <p>初始发布版本。包括论文编辑、保存、API调用、文件导入、中英文对照查看功能。</p>
                 </li>
-                <!-- 未来版本更新在这里添加新的列表项 -->
+                <li>
+                    <strong>v2.0 (2024.4.8):</strong>
+                    <p>更新论文小助手功能，可以显示分析结果，更换图标</p>
+                    <p>显示界面支持更换字体</p>
+                </li>
             </ul>
         </div>
     </body>
@@ -149,7 +153,7 @@ def paper_entry_page():
             sac.StepsItem(title='step 1', description='基本信息'),
             sac.StepsItem(title='step 2', description='通用章节'),
             sac.StepsItem(title='step 3', description='正文'),
-            sac.StepsItem(title='step 4', description='API分析'),
+            sac.StepsItem(title='step 4', description='分析保存'),
         ], format_func='title'
     )
 
@@ -208,23 +212,22 @@ def paper_entry_page():
             <h1>步骤说明</h1>
                 <p>Step1: 填写API Key</p>
                 <p>Step2: 点击"测试"按钮，测试API调用是否正常</p>
-                <p>Step3: 点击"提交"按钮(为防止程序错误，前面两步运行正常后显示)，调用API进行论文翻译、汇总</p>
+                <p>Step3: 点击"提交"按钮(为防止调用API时缺失API Key信息导致程序报错，在前两步运行正常后显示)，调用ChatGPT API进行论文翻译、汇总</p>
+                <p>Step4: 点击"下载"按钮将论文元数据和分析数据下载为文件以便下次查看</p>
         </body>
         </html>
         """
 
         components.html(html_content, height=150)
 
-        key = "api_key"
-        placeholder = "请输入API Key"
-
         col1, col2 = st.columns([8, 1])
+        key = "api_key"
         with col1:
-            create_text_area(placeholder=placeholder, key=key, height=55)
+            create_text_area(placeholder="请输入API Key", key=key, height=55)
         with col2:
             st.button(label="测试", on_click=api_test)
 
-        if not st.session_state["api_key-area"]:
+        if not st.session_state[f"{key}-area"]:
             st.error('1. API Key未填入！')
         else:
             st.success("1. API Key已填写！")
@@ -236,19 +239,21 @@ def paper_entry_page():
 
         col1, col2, col3, col4, col5 = st.columns([1.5, 1, 1, 1, 1])
         with col2:
-            if st.session_state["api_key-area"] and st.session_state["api_flag"]:
+            if st.session_state[f"{key}-area"] and st.session_state["api_flag"]:
                 st.button("提交", key=f"chatgpt_api_button", on_click=api_process)
         with col4:
             st.download_button(
-                label="保存",
+                label="下载",
                 data=save_session_state(),
-                file_name=f"{st.session_state['title-area']}.json",
+                file_name=f"{st.session_state['title-area']}.json",  # 论文标题作为保存名称
                 mime="application/json"
             )
-        if not st.session_state["summary_result"]:
-            st.markdown("summary_result不存在")
-        else:
-            st.json(st.session_state["summary_result"])
+        if st.session_state["summary_result"]:
+            try:
+                st.markdown("ChatGPT分析结果如下：")
+                st.json(st.session_state["summary_result"])
+            except:
+                pass
 
 
 def upload():
@@ -265,7 +270,7 @@ def upload():
                 margin: 20px;
             }
             h1 {
-                font-size: 30px; /* 大标题的字号 */
+                font-size: 20px; /* 大标题的字号 */
                 color: #333;
                 text-align: center; /* 设置标题居中 */
                 margin-bottom: 0em; /* 在h1和下一个元素之间不添加间隔 */

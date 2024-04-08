@@ -1,8 +1,20 @@
 import streamlit as st
+import json
 
 
 def initialize_session_state_variables():
+    # 读取ChatGPT图标可选列表
+    with open('config/ChatGPT_icons.json', "r", encoding='utf8') as file:
+        chatgpt_icon_options = json.load(file)
+    # 读取字体可选列表
+    with open('config/fonts.json', "r", encoding='utf8') as file:
+        font_options = json.load(file)
+
     keys_with_default_values = {
+        # ChatGPT图标可选列表
+        "chatgpt_icon_options": chatgpt_icon_options,
+        # 显示界面字体设置
+        "font_options": font_options,
         # 文本框key
         "title": "",
         "authors": "",

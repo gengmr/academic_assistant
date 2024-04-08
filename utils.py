@@ -28,7 +28,7 @@ def save_session_state():
     # 将 st.session_state 转换为标准字典
     session_state_dict = {key: value for key, value in st.session_state.items()}
     # 序列化转换后的字典
-    session_state_json = json.dumps(session_state_dict, indent=4)
+    session_state_json = json.dumps(session_state_dict, indent=4, ensure_ascii=False)
     return session_state_json
 
 

@@ -3,6 +3,7 @@ import streamlit as st
 import copy
 from openai import OpenAI
 from utils import escape_backslashes_except_newlines, add_section_numbers, get_section_summary
+from config.config import chatgpt_model, base_url, paragraph_process_system_prompt, summarize_system_prompt, translate_system_prompt
 
 
 def api_test():
@@ -11,12 +12,13 @@ def api_test():
     """
     client = OpenAI(
         api_key=st.session_state["api_key-area"],
-        base_url="https://api.aiguoguo199.com/v1"
+        base_url=base_url
     )
+    # 初始化设置为False
     st.session_state['api_flag'] = False
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=chatgpt_model,
             temperature=0,
             messages=[
                 {"role": "user", "content": "hello"}
@@ -42,27 +44,11 @@ def paragraph_process_api(api_key, text):
         try:
             client = OpenAI(
                 api_key=api_key,
-                base_url="https://api.aiguoguo199.com/v1"
+                base_url=base_url
             )
-            system_prompt = """
-You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture.Process the given research paper excerpts as follow steps:
-
-1. Reorganize the paragraph segmentation using "\\n" to ensure clarity, standardization, and ease of understanding.
-2. Convert all mathematical expressions within the text to LaTeX format, by enclosing them within two dollar signs ($...$).
-3. Accurately identify and eliminate references to cited works within the text (e.g., removing citation markers, like "[9]" in "ConvS2S [9]"), ensuring the main content remains unaffected.
-4. After processing the English text, provide the corresponding Chinese text.
-
-You should only respond in the JSON format described below.
-Response Format:
-{
-  "en_context": "formatted text result, which may include multiple paragraphs",
-  "zh_context": "corresponding Chinese text result"
-}
-
-Ensure the response can be parsed by Python json.loads
-            """
+            system_prompt = paragraph_process_system_prompt
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=chatgpt_model,
                 temperature=0,
                 messages=[
                     {'role': 'system', 'content': system_prompt},
@@ -99,51 +85,11 @@ def summarize_api(api_key, text):
         try:
             client = OpenAI(
                 api_key=api_key,
-                base_url="https://api.aiguoguo199.com/v1"
+                base_url=base_url
             )
-            system_prompt = """
-You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Process the given research paper with the following steps in Chinese:
-
-1. Systematically summarize the core content of the paper using professional, standard, and logically clear language (covering research content, innovations, comparisons with other methods, and conclusions, etc.), and provide the referenced chapter numbers.
-2. According to the order of the paper, sequentially summarize the main content of sections (including abstract, introduction, and body chapters) or subsections, and evaluate them from the perspective of a professional paper reviewer.
-3. From the perspective of a professional paper reviewer, assess the research paper's value, research methodology, innovations, and conclusions.
-
-You should only respond in the JSON format described below.
-Response Format:
-{
-  "summary": "A detailed and systematic summary of the research paper's core content, including research content, innovations, comparisons with other methods, and conclusions.",
-  "section_summaries": [
-    {
-      "section_number": "number of the section (e.g., 1, 1.1, 1.1.1)",
-      "content_summary": "Summary of the main content of this section.",
-      "sections": [
-        {
-          "section_number": "number of the subsection",
-          "content_summary": "Summary of the main content of this subsection.",
-          "sections": [
-            // This pattern can repeat as needed for deeper nested sections
-          ]
-        }
-        // Additional subsections can be added here
-      ]
-    }
-    // Additional sections can be added here
-  ],
-{
-  "overall_assessment": {
-    "research_topic": "Description of the research topic and its significance within the field.",
-    "research_outcomes": "Summary of the key findings and contributions of the paper to the existing body of knowledge.",
-    "dataset_description": "Explanation of the dataset(s) used in the paper. If no dataset is used, this section should be left blank.",
-    "methodology": "Assessment of the research methodology.",
-    "innovations": "Discussion of the innovative aspects of the paper.",
-    "overall_writing_logic": "Description of the paper's overall writing logic.",
-    "conclusions": "A professional, holistic, and systematic evaluation of the paper."
-  }
-}
-Please do not include any notes in the results. Ensure the response can be parsed by Python json.loads
-            """
+            system_prompt = summarize_system_prompt
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=chatgpt_model,
                 temperature=0,
                 messages=[
                     {'role': 'system', 'content': system_prompt},
@@ -176,43 +122,39 @@ def translate_api(api_key, text):
     """
     attempts = 0
     max_attempts = 1  # 最大尝试次数
-    while attempts < max_attempts:
-        try:
-            client = OpenAI(
-                api_key=api_key,
-                base_url="https://api.aiguoguo199.com/v1"
-            )
-            system_prompt = """
-You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Translate the given text into Chinese, ensuring that the translation is accurate, fluent, and faithful to the original.You should only respond in the JSON format described below.
-Response Format:
-{
-  "zh_text": "translation result in Chinese"
-}
-Ensure the response can be parsed by Python json.loads
-            """
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                temperature=0,
-                messages=[
-                    {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': text}
-                ]
-            )
-            result = response.choices[0].message.content
+    if text:
+        while attempts < max_attempts:
             try:
-                result = json.loads(result)
-                translation = result['zh_text']
-                return translation
-            except json.JSONDecodeError as e:  # 捕获json解析错误
+                client = OpenAI(
+                    api_key=api_key,
+                    base_url=base_url
+                )
+                system_prompt = translate_system_prompt
+                response = client.chat.completions.create(
+                    model=chatgpt_model,
+                    temperature=0,
+                    messages=[
+                        {'role': 'system', 'content': system_prompt},
+                        {'role': 'user', 'content': text}
+                    ]
+                )
+                result = response.choices[0].message.content
+                try:
+                    result = json.loads(result)
+                    translation = result['zh_text']
+                    return translation
+                except json.JSONDecodeError as e:  # 捕获json解析错误
+                    print(f"Attempt {attempts + 1} failed with error: {e}")
+                    attempts += 1
+                    continue
+            except Exception as e:  # 捕获其他异常
                 print(f"Attempt {attempts + 1} failed with error: {e}")
                 attempts += 1
-                continue
-        except Exception as e:  # 捕获其他异常
-            print(f"Attempt {attempts + 1} failed with error: {e}")
-            attempts += 1
 
-    # 所有尝试失败后的回退，按照输入文本返回
-    translation = text
+        # 所有尝试失败后的回退，按照输入文本返回
+        translation = text
+    else:
+        translation = text
     return translation
 
 

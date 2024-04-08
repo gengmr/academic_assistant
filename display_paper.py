@@ -2,7 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 
-def create_section_html(sections, section_summaries, api_comments_flag, level=1, num_prefix=""):
+def create_section_html(sections, section_summaries, api_comments_flag, selected_icon, level=1, num_prefix=""):
     """
     递归地生成HTML内容，用于表示文档或文章的层次结构化节(section)。
 
@@ -32,7 +32,7 @@ def create_section_html(sections, section_summaries, api_comments_flag, level=1,
             section_counter += 1  # 更新章节计数器
             # 如果api_comments_flag为True，则增加注释显示
             if api_comments_flag and current_num[:-1] in section_summaries:  # 去掉末尾的点
-                html_content += f'<p class="note-italic">🤖[{current_num} {item["title"]}-章节概述]:{section_summaries[current_num[:-1]]}</p>'
+                html_content += f'<p class="note-paragraph">{selected_icon}[{current_num} {item["title"]}-章节概述]:{section_summaries[current_num[:-1]]}</p>'
 
         # 处理单一字符串形式的多段文本
         if 'texts' in item:
@@ -45,16 +45,17 @@ def create_section_html(sections, section_summaries, api_comments_flag, level=1,
         # 递归处理子章节
         if 'sections' in item:
             # 递归调用，增加层级，更新编号前缀，此时current_num已定义
-            html_content += create_section_html(item['sections'], section_summaries, api_comments_flag, level + 1, current_num)
+            html_content += create_section_html(item['sections'], section_summaries, api_comments_flag, selected_icon, level + 1, current_num)
 
     return html_content
 
 
-def display_paper(language, title, authors, institutes, introduction, abstract, keywords, body, api_comments_flag, summary, section_summaries, overall_assessment):
+def display_paper(language, font, title, authors, institutes, introduction, abstract, keywords, body, api_comments_flag, selected_icon, summary, section_summaries, overall_assessment):
     """
     在streamlit中显示论文。
 
     :param language: 语言，"en" or "zh"
+    :param font: 页面显示字体，字符串格式。
     :param title: 论文的标题，字符串格式。
     :param authors: 论文作者，字符串格式。
     :param institutes: 作者所属机构名称，字符串格式。
@@ -66,6 +67,7 @@ def display_paper(language, title, authors, institutes, introduction, abstract, 
                  "texts"键对应章节的正文内容，为字符串格式，可以包含多段，使用"\n"进行分段。
                  "sections"键是可选的，对应于子章节，其值为一个列表，列表中的每个元素也是一个字典，包含"title"和"texts"键及可选的"sections"键，结构与上级相同。
     :param api_comments_flag: 是否显示ChatGPT API汇总结果，布尔形式
+    :param selected_icon: 论文助手图标
     :param summary: ChatGPT API对整篇论文概述，字符串形式
     :param section_summaries: ChatGPT API生成的论文分章节总结内容，字典形式，键为章节号（其中0代表abstract），值为总结内容。
     :param overall_assessment: ChatGPT API对整篇论文评估，列表形式，
@@ -82,61 +84,56 @@ def display_paper(language, title, authors, institutes, introduction, abstract, 
     if language == 'en':
         api_comments_flag = False  # 英文不显示ChatGPT API生成的中文总结
     # 创建正文HTML
-    body_html = create_section_html(introduction_section + body, section_summaries, api_comments_flag)
+    body_html = create_section_html(introduction_section + body, section_summaries, api_comments_flag, selected_icon)
     # abstract注释(ChatGPT API生成的中文总结)
     if api_comments_flag:
-        self_introduction = f'<p class="note">🤖[自我介绍]:您好⊂◉‿◉つ！我是论文小助理，我会为您耐心、专业地讲解论文。在论文的开头，我会为您提供"论文概述"以及我对论文"研究主题"、"研究成果"、"研究方法"、"创新点"、"数据集"、"写作逻辑"的总结和评价，并给出我对论文的总体评价。在正文中，我会对每一章节的内容进行汇总，方便您高效阅读论文。下面让我们开始吧！</p>'
+        self_introduction = f'<p class="note">{selected_icon}[自我介绍]:您好⊂◉‿◉つ！我是论文小助理，我会为您耐心、专业地讲解论文。在论文的开头，我会为您提供"论文概述"以及我对论文"研究主题"、"研究成果"、"研究方法"、"创新点"、"数据集"、"写作逻辑"的总结和评价，并给出我对论文的总体评价。在正文中，我会对每一章节的内容进行汇总，方便您高效阅读论文。下面让我们开始吧！</p>'
     else:
         self_introduction = ""
 
     if api_comments_flag and summary:
-        paper_summary = f'<p class="note">🤖[论文概述]:{summary}</p>'
+        paper_summary = f'<p class="note">{selected_icon}[论文概述]:{summary}</p>'
     else:
         paper_summary = ""
 
     if api_comments_flag and "research_topic" in overall_assessment:
-        paper_research_topic = f'<p class="note">🤖[研究主题]:{overall_assessment["research_topic"]}</p>'
+        paper_research_topic = f'<p class="note">{selected_icon}[研究主题]:{overall_assessment["research_topic"]}</p>'
     else:
         paper_research_topic = ""
 
     if api_comments_flag and "research_outcomes" in overall_assessment:
-        paper_research_outcomes = f'<p class="note">🤖[研究成果]:{overall_assessment["research_outcomes"]}</p>'
+        paper_research_outcomes = f'<p class="note">{selected_icon}[研究成果]:{overall_assessment["research_outcomes"]}</p>'
     else:
         paper_research_outcomes = ""
 
     if api_comments_flag and "methodology" in overall_assessment:
-        paper_methodology = f'<p class="note">🤖[研究方法]:{overall_assessment["methodology"]}</p>'
+        paper_methodology = f'<p class="note">{selected_icon}[研究方法]:{overall_assessment["methodology"]}</p>'
     else:
         paper_methodology = ""
 
     if api_comments_flag and "innovations" in overall_assessment:
-        paper_innovations = f'<p class="note">🤖[创新点]:{overall_assessment["innovations"]}</p>'
+        paper_innovations = f'<p class="note">{selected_icon}[创新点]:{overall_assessment["innovations"]}</p>'
     else:
         paper_innovations = ""
 
     if api_comments_flag and "dataset_description" in overall_assessment:
-        paper_dataset_description = f'<p class="note">🤖[数据集]:{overall_assessment["dataset_description"]}</p>'
+        paper_dataset_description = f'<p class="note">{selected_icon}[数据集]:{overall_assessment["dataset_description"]}</p>'
     else:
         paper_dataset_description = ""
 
-    if api_comments_flag and "overall_writing_logic" in overall_assessment:
-        paper_overall_writing_logic = f'<p class="note">🤖[写作逻辑]:{overall_assessment["overall_writing_logic"]}</p>'
+    if api_comments_flag and "paper_structure" in overall_assessment:
+        paper_structure = f'<p class="note">{selected_icon}[写作逻辑]:{overall_assessment["paper_structure"]}</p>'
     else:
-        paper_overall_writing_logic = ""
+        paper_structure = ""
 
     if api_comments_flag and "conclusions" in overall_assessment:
-        paper_conclusions = f'<p class="note">🤖[整体评价]:{overall_assessment["conclusions"]}</p>'
+        paper_conclusions = f'<p class="note">{selected_icon}[整体评价]:{overall_assessment["conclusions"]}</p>'
     else:
         paper_conclusions = ""
 
-    if api_comments_flag and summary:
-        summary_note = f'<p class="note">🤖[论文概述]:{summary}</p>'
-    else:
-        summary_note = ""
-
     abstract_note = ''
     if api_comments_flag and "0" in section_summaries:
-        abstract_note = f'<p class="note-italic">🤖[摘要概述]:{section_summaries["0"]}</p>'
+        abstract_note = f'<p class="note-paragraph">{selected_icon}[摘要概述]:{section_summaries["0"]}</p>'
     # 定义整个页面的HTML模板
     paper_html_template = f"""
     <html>
@@ -154,7 +151,7 @@ def display_paper(language, title, authors, institutes, introduction, abstract, 
         <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </head>
     <style>
-        body {{ font-family: "Georgia", serif; }}
+        body {{ font-family: "{font}", serif; }}
         h1 {{ font-size: 28px; font-weight: bold; text-align: center; margin-top: 20px; }}
         h2 {{ font-size: 26px; font-weight: bold; text-align: left; margin-top: 20px; }}
         h3 {{ font-size: 24px; font-weight: bold; text-align: left; margin-top: 20px; }}
@@ -166,7 +163,7 @@ def display_paper(language, title, authors, institutes, introduction, abstract, 
         .authors, .institute {{ text-align: center; font-style: italic; font-size: 14px; }}
         .abstract-content {{ font-size: 20px; text-align: justify; text-justify: inter-word; margin: 5px 0; text-indent: 0em;  padding-left: 100px; padding-right: 100px; }}
         .note {{ font-size: 18px; font-weight: bold; text-align: left; margin-top: 20px; color: #967BB6;}} /* 设置注释文字颜色为淡紫色 */
-        .note-italic {{ font-size: 18px; font-weight: bold; text-align: left; margin-top: 20px; color: #967BB6; font-style: italic;}} /* 设置注释文字颜色为淡紫色 */
+        .note-paragraph {{ font-size: 18px; font-weight: bold; text-align: left; margin-top: 20px; color: #967BB6;}} /* 设置注释文字颜色为淡紫色 */
         /* 额外样式，用于可滚动内容 */
         .scrollable-section {{
             background-color: #DFF0D8; /* 护眼色 */
@@ -186,7 +183,7 @@ def display_paper(language, title, authors, institutes, introduction, abstract, 
         {paper_methodology}
         {paper_innovations}
         {paper_dataset_description}
-        {paper_overall_writing_logic}
+        {paper_structure}
         {paper_conclusions}
         <br>
         <h1>{title}</h1>
