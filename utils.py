@@ -23,11 +23,39 @@ def escape_backslashes_except_newlines(text):
 
 def save_session_state():
     """
-    # 保存st.session_state到JSON
+    保存st.session_state到JSON文件中
     """
     # 将 st.session_state 转换为标准字典
-    session_state_dict = {key: value for key, value in st.session_state.items()}
-    # 序列化转换后的字典
+    keys_to_save = [
+        "title-area",
+        "authors-area",
+        "institutes-area",
+        "publication",
+        "publish_time",
+        "introduction_processed",
+        "abstract_processed",
+        "keywords-area",
+        "sections",
+        "sections_processed",
+        "summary",
+        "section_summaries",
+        "overall_assessment",
+        "zh_title-area",
+        "zh_institutes-area",
+        "zh_introduction_processed",
+        "zh_abstract_processed",
+        "zh_keywords-area",
+        "zh_sections_processed",
+        "introduction-area",
+        "abstract-area",
+        "sections",
+        "polish_language_is_english",
+        "polished_title",
+        "polished_introduction",
+        "polished_abstract",
+        "polished_sections"
+    ]
+    session_state_dict = {key: st.session_state[key] for key in keys_to_save if key in st.session_state}    # 序列化转换后的字典
     session_state_json = json.dumps(session_state_dict, indent=4, ensure_ascii=False)
     return session_state_json
 
@@ -217,7 +245,7 @@ def get_section_summary(sections, result=None):
     """
     def adjust_section_number(section_number):
         # 将章节号分割为顶级章节号和其余部分
-        parts = section_number.split('.')
+        parts = str(section_number).split('.')
         # 只减少顶级章节号
         parts[0] = str(int(parts[0]) - 1)
         # 重新组合章节号

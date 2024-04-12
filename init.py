@@ -1,5 +1,6 @@
 import streamlit as st
 import json
+from component_style import component_style
 
 
 def initialize_session_state_variables():
@@ -13,12 +14,14 @@ def initialize_session_state_variables():
     keys_with_default_values = {
         # ChatGPT图标可选列表
         "chatgpt_icon_options": chatgpt_icon_options,
-        # 显示界面字体设置
+        # 显示界面字体可选列表
         "font_options": font_options,
         # 文本框key
+        "publish_time": "",  # 论文发表日期
         "title": "",
         "authors": "",
         "institutes": "",
+        "publication": "",
         "introduction": "",
         "abstract": "",
         "keywords": "",
@@ -52,9 +55,37 @@ def initialize_session_state_variables():
         # ChatGPT API生成的论文分章节总结
         "section_summaries": [],
         # ChatGPT API对论文整体评估
-        "overall_assessment": []
+        "overall_assessment": [],
+        # 润色结果
+        "polished_title-area": "",
+        "polished_introduction_processed": "",
+        "polished_abstract_processed": "",
+        "polished_sections_processed": [],
     }
 
     for key, default_value in keys_with_default_values.items():
         if key not in st.session_state:
             st.session_state[key] = default_value
+
+
+def init():
+    """
+    变量初始化、组件样式、页面样式、侧边栏样式等
+    """
+    # 初始化变量
+    initialize_session_state_variables()
+    # 设置为宽屏模式
+    st.set_page_config(layout="wide")
+    # 定义通用CSS样式来减少上方空白
+    custom_css = """
+        <style>
+            /* 隐藏Streamlit的顶部导航栏 */
+            .stApp { margin-top: -100px; }
+        </style>
+    """
+    # 将自定义CSS添加到页面
+    st.markdown(custom_css, unsafe_allow_html=True)
+    # 设置组件样式为自定义样式，符合苹果风格
+    component_style()
+    # 设置侧边栏样式
+    st.markdown('<style>' + open('sidebar.css').read() + '</style>', unsafe_allow_html=True)

@@ -1,4 +1,3 @@
-import streamlit as st
 import streamlit.components.v1 as components
 
 
@@ -81,8 +80,6 @@ def display_paper(language, font, title, authors, institutes, introduction, abst
     introduction_title = "Introduction" if language == "en" else "引言"
     # 将引言部分作为正文的第一节
     introduction_section = [{"title": f"{introduction_title}", "texts": introduction}]
-    if language == 'en':
-        api_comments_flag = False  # 英文不显示ChatGPT API生成的中文总结
     # 创建正文HTML
     body_html = create_section_html(introduction_section + body, section_summaries, api_comments_flag, selected_icon)
     # abstract注释(ChatGPT API生成的中文总结)
@@ -200,83 +197,3 @@ def display_paper(language, font, title, authors, institutes, introduction, abst
     """
     # 使用Streamlit的components.html方法来渲染HTML模板
     components.html(paper_html_template, height=800, scrolling=True)
-
-
-if __name__ == "__main__":
-    col1, col2 = st.columns([1, 1])  # 左右两侧分配相等的空间
-
-    with col1:
-        display_paper(
-            language='en',
-            title="Advancements in Generative Adversarial Networks: Beyond the Basics",
-            authors="Elena Petrova, Jun Li, Carlos Gomez",
-            institutes="Department of Computer Science, Technological University of Madrid",
-            introduction="Generative Adversarial Networks (GANs) represent a significant leap forward in the ability to generate realistic, synthetic data, impacting various domains from medical imaging to art creation.",
-            abstract="This comprehensive review delves into the evolution of GANs, discussing key architectural advancements, the broadening spectrum of applications, and the theoretical frameworks that underpin their functionality.",
-            keywords="Generative Adversarial Networks, Synthetic Data, Deep Learning, Artificial Intelligence",
-            body=[
-                {"title": "Foundational Concepts of GANs",
-                 "texts": "Generative Adversarial Networks (GANs) are defined by the symbiotic relationship between two distinct neural networks: the Generator (G) and the Discriminator (D). This relationship can be represented by the formula $G(z, \\theta_g) = x_{gen}$, where $z$ is a sample from the input noise distribution, and $x_{gen}$ is the generated data.\nThis dynamic duo engages in a continuous game, with G aiming to generate data indistinguishable from authentic data sets and D endeavoring to accurately classify data as real or synthetic.",
-                 "sections": [
-                     {"title": "The Generator",
-                      "texts": "The Generator's role is to fabricate data that mirrors the real-world data it has been trained on, leveraging random noise as a seed for creativity."},
-                     {"title": "The Discriminator",
-                      "texts": "The Discriminator acts as a critic, evaluating the authenticity of data presented by the Generator and making binary classifications."},
-                 ]},
-                {"title": "Evolution and Enhancement of GAN Architectures",
-                 "texts": "Since their inception, GANs have undergone significant modifications to improve stability and output quality.\nThese enhancements have facilitated GANs' ability to produce increasingly sophisticated and diverse outputs.",
-                 "sections": [
-                     {"title": "Introduction to Conditional GANs",
-                      "texts": "Conditional GANs (cGANs) integrate additional labels to guide the data generation process, enabling the production of targeted outputs."},
-                     {"title": "Progressive Growing of GANs",
-                      "texts": "This technique incrementally increases the complexity of the Generator and Discriminator, allowing for the generation of high-resolution images."},
-                 ]},
-                {"title": "Applications and Implications of GANs",
-                 "texts": "GANs have catalyzed a revolution in fields ranging from art generation to synthetic data creation for AI training.\nTheir capacity to mimic reality has both enthralled and raised ethical questions.",
-                 "sections": [
-                     {"title": "Creative and Artistic Endeavors",
-                      "texts": "GANs have been utilized to create new artworks and music, challenging our perceptions of creativity and authorship."},
-                     {"title": "Synthetic Data Generation for Research",
-                      "texts": "In areas where data scarcity is a challenge, GANs offer a solution by generating realistic, usable data sets for research and development."},
-                 ]},
-            ]
-        )
-
-    with col2:
-        display_paper(
-            language='zh',
-            title="生成对抗网络的进展：超越基础",
-            authors="埃琳娜·佩特罗娃, 李军, 卡洛斯·戈麦斯",
-            institutes="马德里理工大学计算机科学系",
-            introduction="生成对抗网络（GANs）在生成逼真合成数据的能力上代表了一个重大的飞跃，影响了从医学成像到艺术创造的各个领域。",
-            abstract="这篇全面的综述深入探讨了GANs的演进，讨论了关键的架构进步、应用领域的扩展，以及支撑其功能的理论框架。",
-            keywords="生成对抗网络, 合成数据, 深度学习, 人工智能",
-            body=[
-                {"title": "GANs的基础概念",
-                 "texts": "生成对抗网络（GANs）由两个独特的神经网络构成的共生关系定义：生成器（G）和鉴别器（D）。这种关系可以用公式$G(z, \\theta_g) = x_{gen}$来表示，其中$z$是输入噪声分布的样本，$x_{gen}$是生成的数据。\n这对动态二人组在一个持续的游戏中互动，G旨在生成与真实数据集无法区分的数据，D努力准确地将数据分类为真实或合成。",
-                 "sections": [
-                     {"title": "生成器",
-                      "texts": "生成器的角色是利用随机噪声作为创造力的种子，制造出与其被训练的真实世界数据镜像的数据。"},
-                     {"title": "鉴别器",
-                      "texts": "鉴别器作为评判者，评估生成器提出的数据的真实性，并进行二元分类。"},
-                 ]},
-                {"title": "GAN架构的演化与增强",
-                 "texts": "自从它们被引入以来，GANs经历了重大的修改，以提高稳定性和输出质量。\n这些增强使GANs能够生产出越来越精细和多样化的输出。",
-                 "sections": [
-                     {"title": "条件GANs简介",
-                      "texts": "条件GANs（cGANs）整合了额外的标签来指导数据生成过程，使得生产目标输出成为可能。"},
-                     {"title": "GANs的渐进式增长",
-                      "texts": "这种技术逐渐增加了生成器和鉴别器的复杂性，允许生成高分辨率的图像。"},
-                 ]},
-                {"title": "GANs的应用与影响",
-                 "texts": "GANs在从艺术生成到为AI训练创建合成数据的领域引发了革命。\n它们模仿现实的能力既让人着迷也引发了伦理问题。",
-                 "sections": [
-                     {"title": "创意和艺术探索",
-                      "texts": "GANs已被用于创造新的艺术作品和音乐，挑战我们对创造性和作者身份的看法。"},
-                     {"title": "研究用合成数据生成",
-                      "texts": "在数据稀缺是一大挑战的领域，GANs提供了一个解决方案，通过生成逼真、可用的数据集来支持研究和开发。"},
-                 ]},
-            ]
-        )
-
-
